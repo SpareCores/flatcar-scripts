@@ -21,6 +21,9 @@ set -euo pipefail
 
 [[ "${MKOSI_DEBUG:-0}" == "1" ]] && set -x
 
+# Post-output scripts get no ARTIFACTDIR from mkosi. lib.sh needs it only for
+# BUILD_DIR (configroot, emerge), which nothing here uses.
+export ARTIFACTDIR="${ARTIFACTDIR:-$(mktemp -d)}"
 . "${SRCDIR}/lib/lib.sh"
 
 outdir="${OUTPUTDIR:?OUTPUTDIR must be set by mkosi}"
@@ -41,6 +44,8 @@ src_img="${outdir}/flatcar_production_image.bin"
 dst_img="${outdir}/flatcar_production_qemu_uefi_image.bin"
 ln -sf "$(basename "${img}")" "${src_img}"
 ln -sf "$(basename "${img}")" "${dst_img}"
+# _write_qemu_uefi_conf also writes the Secure Boot launcher, which expects this name.
+ln -sf "$(basename "${img}")" "${outdir}/flatcar_production_qemu_uefi_secure_image.bin"
 
 
 VM_IMG_TYPE=qemu_uefi

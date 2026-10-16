@@ -87,3 +87,10 @@ printf '%s' "${roothash}" | \
     dd of="${kernel}" bs=1 seek="${verity_offset}" count=64 conv=notrunc status=none
 
 echo "[verity] usrhash=${roothash} injected into vmlinuz-a @0x40"
+
+# 4. build_image_util.sh finish_image():796-801. Sign after the hash injection,
+# which would otherwise invalidate the signature.
+if [[ ${COREOS_OFFICIAL:-0} -ne 1 ]]; then
+    do_sbsign --output "${kernel}"{,}
+    cleanup_sbsign_certs
+fi

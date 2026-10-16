@@ -25,6 +25,36 @@ set -euo pipefail
 
 root="${BUILDROOT:?BUILDROOT must be set by mkosi}"
 
+# For BOARD and the /build bind that grub_install.sh reads GRUB and shim from.
+. "${SRCDIR}/lib/lib.sh"
+
+# grub_install.sh only generates the memdisk grub.cfg when the ESP has none, so
+# seed it from upstream's file plus our one delta: selinux=0, as this tree
+# builds no SELinux policy. The @@MOUNTUSR@@ sed repeats grub_install.sh's own.
+esp="${root}/efi"
+install -d "${esp}/flatcar/grub"
+grub_tmp="$(mktemp -d)"
+sed -e 's/@@MOUNTUSR@@/mount.usr=\/dev\/mapper\/usr verity.usr/' \
+    -e 's/consoleblank=0 \$linux_root/consoleblank=0 selinux=0 $linux_root/' \
+    "${BUILD_LIBRARY_DIR}/grub.cfg" > "${grub_tmp}/grub.cfg"
+grep -q 'selinux=0' "${grub_tmp}/grub.cfg" || { echo "grub.cfg: selinux=0 sed did not apply" >&2; exit 1; }
+tar cf "${esp}/flatcar/grub/grub.cfg.tar" -C "${grub_tmp}" grub.cfg
+rm -rf "${grub_tmp}"
+
+# build_image_util.sh finish_image():823-846, EFI target only: i386-pc and
+# x86_64-xen need a loop-mounted disk, which does not exist yet.
+case "${BOARD}" in
+  amd64-usr) grub_target=x86_64-efi ;;
+  arm64-usr) grub_target=arm64-efi ;;
+esac
+"${BUILD_LIBRARY_DIR}/grub_install.sh" \
+    --board="${BOARD}" \
+    --target="${grub_target}" \
+    --verity \
+    --skip_emerge \
+    --esp_dir="${esp}" \
+    --esp_part_label=EFI-SYSTEM
+
 # Guarantee /oem-tree exists so the OEM partition's CopyFiles=/oem-tree:/ has a
 # source even in no-profile builds. The oem-qemu profile stages a populated tree
 # here via ExtraTrees + mkosi.oem-finalize; without a profile repart would fail

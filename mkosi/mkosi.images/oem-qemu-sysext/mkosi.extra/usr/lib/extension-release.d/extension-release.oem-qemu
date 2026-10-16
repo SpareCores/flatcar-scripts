@@ -1,0 +1,17 @@
+# Pre-seeded OEM identity fields for the oem-qemu sysext.
+#
+# mkosi's configure_extension_release() PRESERVES any keys already present in
+# this file and only FILLS IN the ones it derives:
+#   ID          <- base tree os-release ID  ('flatcar')
+#   VERSION_ID  <- base tree os-release VERSION_ID (the Flatcar release; must
+#                  match for the sysext to merge at runtime)
+#   SYSEXT_ID   <- ImageId      (oem-qemu)
+#   SYSEXT_VERSION_ID <- ImageVersion (0.0.2)
+#
+# The fields below mirror the shipped bincache oem-qemu.raw extension-release
+# and come from the coreos-base/oem-qemu ebuild (SYSEXT_NAME="QEMU",
+# HOMEPAGE="https://www.qemu.org/").
+SYSEXT_NAME='QEMU'
+ARCHITECTURE='x86-64'
+SYSEXT_HOME_URL='https://www.qemu.org/'
+SYSEXT_BUG_REPORT_URL='https://issues.flatcar.org'

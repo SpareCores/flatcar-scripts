@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: LGPL-2.1-or-later
+#
+# Pin the disk GPT GUID of the final image.raw to Flatcar's well-known base value
+# 00000000-0000-0000-0000-000000000001 (upstream sets it via disk_util -g).
+#
+# systemd-repart derives the disk GUID by hashing --seed, giving a random value.
+# But grub's `search --disk-uuid 00000000-0000-0000-0000-000000000001` (grub.cfg)
+# and the initrd GPT repair (bootengine disk-uuid.sh, which runs `cgpt repair` to
+# relocate the backup GPT header on a grown disk) both key off that fixed GUID.
+# Without it, disk-uuid.sh never fires, the backup GPT header stays stranded when
+# a disk grows (e.g. kola's --qemu-grow-base-disk-by), and Ignition can't create
+# partitions on the grown disk -> cl.ignition.partition_on_boot_disk fails.
+#
+# mkosi.postoutput runs after make_disk with the staged output at $OUTPUTDIR.
+set -euo pipefail
+
+[[ "${MKOSI_DEBUG:-0}" == "1" ]] && set -x
+
+img="${OUTPUTDIR:?OUTPUTDIR must be set by mkosi}/image.raw"
+[[ -f "${img}" ]] || { echo "[postoutput] ${img} not found, skipping disk-GUID pin"; exit 0; }
+
+sgdisk -U 00000000-0000-0000-0000-000000000001 "${img}" >/dev/null
+echo "[postoutput] pinned image.raw disk GUID to 00000000-0000-0000-0000-000000000001"
+
+# Emit the upstream-style qemu launcher next to the image.
+# "${SRCDIR}/tools/write-qemu-script.sh"

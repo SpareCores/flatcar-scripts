@@ -1,0 +1,15 @@
+#!/bin/bash
+# Upgrade packages in mkosi's $BUILDROOT from the SDK board sysroot.
+set -euo pipefail
+. "${SRCDIR}/lib/lib.sh"
+
+[ "$#" -gt 0 ] || exit 0
+
+echo "mkosi-upgrade: $* (board $(sdk_board))"
+sdk_emerge --usepkgonly \
+           --binpkg-respect-use=y \
+           --getbinpkg \
+           --update --deep --newuse \
+           --verbose \
+           --jobs="${NUM_JOBS:-$(nproc)}" \
+           "$@"

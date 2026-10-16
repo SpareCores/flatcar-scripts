@@ -1,0 +1,31 @@
+#!/bin/bash
+# Base-image-only prepare hook, auto-detected by mkosi (mkosi.prepare).
+#
+# Runs BEFORE the shared tools/prepare.sh: mkosi orders auto-detected scripts
+# ahead of the ones listed in PrepareScripts=. So the buildroot is still empty
+# here -- no baselayout, no Packages=, no os-release. This is the place for
+# setup the package install depends on.
+#
+# Only the base image gets this; sysexts overlay the base tree and inherit the
+# result without re-running it.
+set -euo pipefail
+
+[[ "${MKOSI_DEBUG:-0}" == "1" ]] && set -x
+
+# mkosi calls prepare scripts twice: "build" (before BuildPackages=) and "final".
+[ "$1" = final ] || exit 0
+
+# shellcheck source=tools/bin/lib.sh
+. "${SRCDIR}/lib/lib.sh"
+
+# extract_prod_gcc ends in package_provided, which writes into the configroot's
+# profile, so the configroot has to exist first. The shared tools/prepare.sh
+# runs create_configroot again (and set_image_profile after it) for every
+# sub-image, so neither is repeated here.
+create_configroot "$FLATCAR_UPDATE_GROUP"
+# build_library/prod_image_util.sh create_prod_image():96 -- pre-emerge;
+# run_ldconfig/run_localedef (:98-99) run after it, so they live in
+# mkosi.postinst.
+extract_prod_gcc "$BUILDROOT"
+
+echo "prepare[base]: pre-install steps"

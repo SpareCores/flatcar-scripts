@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+[[ "${MKOSI_DEBUG:-0}" == "1" ]] && set -x
+
+rootfs="${BUILDROOT:?BUILDROOT must be set by mkosi}"
+
+# copied from scripts/build_library/sysext_mangle_containerd-flatcar
+pushd "${rootfs}"
+
+# No manpages on Flatcar, no need to ship "stress" tool
+rm -rf ./usr/{bin/{containerd-stress,gen-manpages},lib/debug/}
+
+# shipped via mkosi.extra
+# dir=$(dirname "${BASH_SOURCE[0]}")
+# files_dir="${dir}/../sdk_container/src/third_party/coreos-overlay/coreos/sysext/containerd"
+# 
+# echo ">>> NOTICE $0: installing extra files from '${files_dir}'"
+# # ATTENTION: don't preserve ownership as repo is owned by sdk user
+# cp -vdR --preserve=mode,timestamps "${files_dir}/"* ./
+
+install -D -m0644 /dev/stdin ./usr/lib/systemd/system/multi-user.target.d/10-containerd-service.conf <<EOF
+[Unit]
+Upholds=containerd.service
+EOF
+
+popd

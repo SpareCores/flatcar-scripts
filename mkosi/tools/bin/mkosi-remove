@@ -1,0 +1,13 @@
+#!/bin/bash
+# Remove packages from mkosi's $BUILDROOT.
+#
+# Only meaningful in a tree that OWNS its content (Format=directory without
+# Overlay=yes): an overlay upperdir cannot express deletion, and the sysext
+# delta pruning keeps only genuinely added files.
+set -euo pipefail
+. "${SRCDIR}/lib/lib.sh"
+
+[ "$#" -gt 0 ] || exit 0
+
+echo "mkosi-remove: $* (board $(sdk_board))"
+sdk_emerge --unmerge --verbose "$@"

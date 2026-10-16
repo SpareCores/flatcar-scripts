@@ -1,0 +1,15 @@
+#!/bin/bash
+# Reinstall packages into mkosi's $BUILDROOT from the SDK board sysroot.
+set -euo pipefail
+. "${SRCDIR}/lib/lib.sh"
+
+[ "$#" -gt 0 ] || exit 0
+
+echo "mkosi-reinstall: $* (board $(sdk_board))"
+sdk_emerge --usepkgonly \
+           --binpkg-respect-use=y \
+           --getbinpkg \
+           --emptytree \
+           --verbose \
+           --jobs="${NUM_JOBS:-$(nproc)}" \
+           "$@"

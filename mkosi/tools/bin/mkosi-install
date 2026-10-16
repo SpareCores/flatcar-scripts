@@ -1,0 +1,17 @@
+#!/bin/bash
+# Install packages into mkosi's $BUILDROOT from the SDK board's binpkgs.
+#
+# Flags mirror build_library/build_image_util.sh emerge_to_image(). No
+# --getbinpkg: the board's remote binhost is a per-version bincache URL that
+# does not exist for a locally built SDK, so use the local PKGDIR only.
+set -euo pipefail
+. "${SRCDIR}/lib/lib.sh"
+
+[ "$#" -gt 0 ] || exit 0
+
+echo "mkosi-install: $* (board $(sdk_board))"
+sdk_emerge --usepkgonly \
+           --binpkg-respect-use=y \
+           --jobs="${NUM_JOBS}" \
+           --verbose \
+           "$@"

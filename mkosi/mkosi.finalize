@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+# Build a dm-verity /usr and inject its root hash into the kernel, mirroring
+# upstream finish_image.sh + disk_util verity. Runs on the HOST with BUILDROOT
+# open, BEFORE repart assembles image.raw (so vmlinuz-a isn't on the ESP yet).
+# Layout: usr.img = [ btrfs 0..FS_BYTES ) [ verity hash tree FS_BYTES.. ]; repart
+# writes it onto USR-A via CopyBlocks=. grub reads the hash from vmlinuz@0x40 and
+# appends verity.usrhash= to the cmdline.
+set -euo pipefail
+
+[[ "${MKOSI_DEBUG:-0}" == "1" ]] && set -x
+. "${SRCDIR}/lib/lib.sh"
+
+root="${BUILDROOT:?BUILDROOT must be set by mkosi}"
+usr_dir="${root}/usr"
+kernel="${root}/boot/flatcar/vmlinuz-a"
+blob="${root}/usr.img"          # repart CopyBlocks=/usr.img (resolves under --root=/buildroot)
+
+[[ -d "${usr_dir}" ]] || { echo "[verity] ${usr_dir} missing" >&2; exit 1; }
+[[ -f "${kernel}"  ]] || { echo "[verity] ${kernel} missing" >&2; exit 1; }
+
+# Terminal image (nothing emerges past here): drop portage's DB from ROOT. The
+# base postinst keeps it so the grub/oem-qemu overlays emerge incrementally.
+rm -rf "${root}/var/db/pkg" "${root}/var/cache/edb"
+
+# TODO(mkosi-fork): mkosi regenerates /etc/portage (make.conf, repos.conf, and a
+# dangling make.profile symlink into the SDK) into context.root during the final
+# disk build — AFTER the base postinst removed it — because flatcar.py's
+# install() runs Emerge even for the Packages-less top-level image. The right fix
+# is in the mkosi fork: don't emit /etc/portage into context.root for a
+# Packages-less image (or clean it up post-install), matching upstream which
+# ships no /etc/portage. Until then strip it here; make.profile is otherwise a
+# dead symlink (kola cl.filesystem/deadlinks). See ESELECT.md-style tracking.
+rm -rf "${root}/etc/portage"
+
+# TODO(mkosi-fork): same root cause — mkosi's Emerge (run on the final
+# Packages-less image too) repopulates /var in context.root AFTER the base
+# postinst emptied it (net-firewall/nftables' pkg_postinst re-touches
+# /var/lib/nftables/rules-save mode 600, plus emerge logs, nfs/portage state).
+# Fork fix: don't repopulate /var (or empty it) for a Packages-less image, so it
+# ships empty like upstream and the dir skeleton is recreated at boot from
+# tmpfiles (base_image_var{,_late}.conf). Until then strip here (terminal image:
+# var/db/pkg + var/cache/edb already dropped above) — every remaining regular
+# file, symlink and .keep under /var, leaving only the tmpfiles-recreatable dirs.
+find "${root}/var" -mindepth 1 \( -type f -o -type l \) -delete 2>/dev/null || true
+
+verity_offset=64   # amd64 rdev field in the kernel; grub reads the hash here (arm64: 512)
+block_size=4096
+
+# Size is fixed: the bootengine opens verity with a hardcoded --hash-offset
+# (code/bootengine/minimal-init = disk_layout.json fs_blocks 260094 * 4096).
+fs_bytes=1065345024
+data_blocks=$(( fs_bytes / block_size ))
+
+usr_bytes="$(du -sB1 "${usr_dir}" | cut -f1)"
+echo "[verity] /usr is ${usr_bytes} B; building fixed ${fs_bytes} B zstd btrfs"
+
+# 1. Build zstd btrfs from /usr (flags mirror upstream disk_util FormatBtrfs).
+rm -f "${blob}"
+truncate -s "$(( usr_bytes + 128 * 1024 * 1024 ))" "${blob}"   # upper bound for --shrink
+mkfs.btrfs -f -L USR-A -m single -d single \
+    --compress zstd --rootdir "${usr_dir}" --shrink "${blob}"
+
+shrunk="$(stat -c %s "${blob}")"
+echo "[verity] zstd btrfs shrank to ${shrunk} B (must be <= ${fs_bytes} B)"
+if (( shrunk > fs_bytes )); then
+  echo "[verity] /usr does not fit ${fs_bytes} B; strip more packages (offset is pinned)." >&2
+  exit 1
+fi
+
+# Pad to fs_bytes so the hash tree starts at the bootengine's expected offset;
+# btrfs total_bytes stays at ${shrunk} (< device), which the kernel accepts.
+truncate -s "${fs_bytes}" "${blob}"
+
+# 2. Append the verity hash tree (target veritysetup) and capture the root hash.
+verityout="$(mkosi-chroot veritysetup format --hash=sha256 \
+    --data-block-size="${block_size}" \
+    --hash-block-size="${block_size}" \
+    --data-blocks="${data_blocks}" \
+    --hash-offset="${fs_bytes}" \
+    /usr.img /usr.img)"
+echo "${verityout}"
+roothash="$(printf '%s\n' "${verityout}" | sed -n 's/^Root hash:[[:space:]]*\([a-fA-F0-9]\{64\}\)$/\1/p')"
+[[ -n "${roothash}" ]] || { echo "[verity] failed to parse root hash" >&2; exit 1; }
+
+# 3. Inject the hash into vmlinuz@0x40; grub reads it back into the cmdline.
+printf '%s' "${roothash}" | \
+    dd of="${kernel}" bs=1 seek="${verity_offset}" count=64 conv=notrunc status=none
+
+echo "[verity] usrhash=${roothash} injected into vmlinuz-a @0x40"

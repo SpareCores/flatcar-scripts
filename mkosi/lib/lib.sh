@@ -40,6 +40,14 @@ if [[ ! -e /build ]]; then
   mount --bind /work/src/build /build
 fi
 
+# The kernel config hardcodes MODULE_SIG_KEY at the SDK's key path, so the
+# BuildSources= mount has to appear there too.
+if [[ -n "${MODULE_SIGNING_KEY_DIR:-}" && -d /work/src/module-signing-keys ]] \
+    && ! mountpoint -q "${MODULE_SIGNING_KEY_DIR}"; then
+  mkdir -p "${MODULE_SIGNING_KEY_DIR}"
+  mount --bind /work/src/module-signing-keys "${MODULE_SIGNING_KEY_DIR}"
+fi
+
 # mkosi writes its own /etc/nsswitch.conf without the SDK's `usrfiles` module,
 # so acct-user/acct-group entries (they live in /usr/share/baselayout/passwd)
 # become invisible and every doins -o <user> / fowners in a source build fails.

@@ -13,5 +13,6 @@
 # HOMEPAGE="https://www.qemu.org/").
 SYSEXT_NAME='QEMU'
 ARCHITECTURE='x86-64'
+EXTENSION_RELOAD_MANAGER=1
 SYSEXT_HOME_URL='https://www.qemu.org/'
 SYSEXT_BUG_REPORT_URL='https://issues.flatcar.org'

@@ -31,8 +31,8 @@ cp -a "${root}/var/db/pkg" "${merged}/var/db/pkg"
 
 shopt -s nullglob
 for d in "${outdir}"/*-pkgdb; do
-    [[ -d "${d}" ]] || continue
-    cp -a "${d}"/. "${merged}/var/db/pkg/"
+    [[ -d "${d}/var/db/pkg" ]] || continue
+    cp -a "${d}/var/db/pkg"/. "${merged}/var/db/pkg/"
     echo "[licenses] merged $(basename "${d}")"
 done
 shopt -u nullglob

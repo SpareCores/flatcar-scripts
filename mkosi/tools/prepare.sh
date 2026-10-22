@@ -44,7 +44,16 @@ mapfile -t remove  < <(mkosi_config_read_array RemovePackages)
 # of the image. Set FLATCAR_SOURCE_BUILD=0 for a strictly binpkg-only build.
 if [ "${FLATCAR_SOURCE_BUILD:-1}" = 1 ] && [ "${#install[@]}" -gt 0 ]; then
     echo "prepare[$image]: source build enabled, emerging ${install[*]} into ${BOARD_ROOT}"
-    emerge_from_source "${install[@]}"
+    if [ "$(jq -r '.Format' "$MKOSI_CONFIG")" = sysext ]; then
+        # As build_packages' build_sysext_packages: only the deps get merged
+        # into the board root, the sysext packages are just built into PKGDIR
+        # (merging them collides, e.g. the nvidia-drivers variants).
+        export FEATURES="${FEATURES:+${FEATURES} }binpkg-multi-instance"
+        emerge_from_source --onlydeps "${install[@]}"
+        emerge_from_source --buildpkgonly "${install[@]}"
+    else
+        emerge_from_source "${install[@]}"
+    fi
 fi
 
 [ "${#install[@]}" -gt 0 ] && mkosi-install "${install[@]}"

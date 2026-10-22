@@ -321,7 +321,7 @@ emerge_from_source() {
     "${SDK_ENV_SCRUB[@]}" \
     DISTDIR="${DISTDIR}" \
     PATH="$(sdk_clean_path)" \
-    FEATURES="-ebuild-locks -merge-wait -sandbox -usersandbox -network-sandbox -pid-sandbox -ipc-sandbox" \
+    FEATURES="-ebuild-locks -merge-wait -sandbox -usersandbox -network-sandbox -pid-sandbox -ipc-sandbox${FEATURES:+ ${FEATURES}}" \
         "emerge-${board}" \
         "--update" \
         "--deep" \

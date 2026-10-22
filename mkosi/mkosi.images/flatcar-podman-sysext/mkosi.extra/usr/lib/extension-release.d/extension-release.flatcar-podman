@@ -1,0 +1,3 @@
+# Seed for mkosi's configure_extension_release(), which keeps these keys and
+# derives the rest. build_sysext:297 sets this for every sysext.
+EXTENSION_RELOAD_MANAGER=1

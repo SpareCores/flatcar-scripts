@@ -87,13 +87,3 @@ done
 # from it. Covers base + every sysext: each sysext saves its pkgdb via
 # tools/save-pkgdb.sh and write-licenses.sh merges them before generating.
 "${SRCDIR}/tools/write-licenses.sh"
-
-# Re-create the first-boot marker. The base postinst writes it into the base
-# tree, but it does not survive into the final image's /boot/flatcar (which
-# mkosi repopulates with vmlinuz-a + microcode.initrd). Without it on the ESP,
-# Ignition skips the first-boot path and initrd-setup-root-after-ignition
-# instead tries to fetch an update payload, failing with GetRequestFailed(404).
-install -d -m 0755 "${root}/boot/flatcar"
-cat > "${root}/boot/flatcar/first_boot" <<EOF
-If this file exists, Ignition will run and then delete the file.
-EOF

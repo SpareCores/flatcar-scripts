@@ -338,7 +338,6 @@ emerge_from_source() {
         "--with-bdeps=n" \
         "${binonly_args[@]}" \
         "${binpkg_args[@]}" \
-        "--getbinpkg" \
         "--jobs=22" \
         "$@"
 

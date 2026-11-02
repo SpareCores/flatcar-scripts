@@ -72,9 +72,12 @@ BUILD_DIR="${FLAGS_output_root}/${BOARD}/${FLAGS_group}-${FLAGS_version}"
 NUM_JOBS=0
 GCLIENT_ROOT=''
 COMMON_SH=''
-set +u
+# common.sh's tput colour probes fail under set -e without a capable TERM.
+_sdk_errexit=+e; [[ $- == *e* ]] && _sdk_errexit=-e
+set +eu
 . "${SDK_SCRIPTS}/common.sh"
-set -u
+set -u "${_sdk_errexit}"
+unset _sdk_errexit
 # Source order mirrors build_image:108-114. toolchain_util.sh has to come before
 # build_image_util.sh: the latter sources sbsign_util.sh, which calls
 # get_sdk_libdir() at load time, and that function lives in toolchain_util.sh.

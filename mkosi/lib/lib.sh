@@ -101,6 +101,12 @@ create_configroot() {
   update_group="$1"
   # based on start_image
 
+  mkdir -p "${BUILD_DIR}"/configroot/etc/portage/profile
+  ln -sfn "${BOARD_ROOT}"/etc/portage/make.* \
+      "${BOARD_ROOT}"/etc/portage/package.* \
+      "${BOARD_ROOT}"/etc/portage/repos.conf \
+      "${BUILD_DIR}"/configroot/etc/portage/
+
  # First thing first, install baselayout to create a working filesystem.
   mkosi-install --nodeps --oneshot --update sys-apps/baselayout
 
@@ -115,12 +121,6 @@ create_configroot() {
     --root="${BUILDROOT}" \
     --group="${update_group}" \
     --board="${BOARD}"
-
-  mkdir -p "${BUILD_DIR}"/configroot/etc/portage/profile
-  ln -sfn "${BOARD_ROOT}"/etc/portage/make.* \
-      "${BOARD_ROOT}"/etc/portage/package.* \
-      "${BOARD_ROOT}"/etc/portage/repos.conf \
-      "${BUILD_DIR}"/configroot/etc/portage/
 }
 
 # sdk_call() {
@@ -143,13 +143,19 @@ create_configroot() {
 # We disable portage's sandbox (-sandbox -usersandbox and the namespace ones).
 # mkosi already runs hooks inside a bwrap sandbox.
 sdk_emerge() {
-    local board configroot
+    local board config_args
     # TODO: reuse from setup_env
     # BUILD_DIR="${ARTIFACTDIR}/$(sdk_board)/${FLATCAR_UPDATE_GROUP}-${IMAGE_VERSION}"
 
     board="$(sdk_board)"
     root="${BUILDROOT:?BUILDROOT must be set by mkosi}"
-    configroot="${BUILD_DIR}/configroot/"
+    # Not emerge-${board}: it forces PORTAGE_CONFIGROOT to the board root.
+    # Image: prod configroot (emerge_to_image); sysext: board config (build_sysext).
+    if [[ "$(jq -r .Format "${MKOSI_CONFIG}")" == sysext ]]; then
+        config_args=(--config-root="/build/${board}" --sysroot="/build/${board}")
+    else
+        config_args=(--config-root="${BUILD_DIR}/configroot")
+    fi
 
     # Drop mkosi's /scripts shims from PATH (see sdk_clean_path).
     local clean_path
@@ -157,10 +163,9 @@ sdk_emerge() {
 
     "${SDK_ENV_SCRUB[@]}" \
     ROOT="${BUILDROOT}" \
-    PORTAGE_CONFIGROOT="${configroot}" \
     PATH="${clean_path}" \
     FEATURES="-ebuild-locks -merge-wait -sandbox -usersandbox -network-sandbox -pid-sandbox -ipc-sandbox" \
-        "emerge-${board}" --root="${BUILDROOT}" "$@"
+        emerge --root="${BUILDROOT}" "${config_args[@]}" "$@"
 
     # Make sure profile.env has been generated
     sudo -E ROOT="${BUILDROOT}" env-update --no-ldconfig

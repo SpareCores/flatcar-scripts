@@ -16,8 +16,11 @@ set -euo pipefail
 
 . "${SRCDIR}/lib/lib.sh"
 
-create_configroot "$FLATCAR_UPDATE_GROUP"
-set_image_profile "$FLATCAR_IMAGE_PROFILE"   # build_image_util.sh:156
+# build_sysext emerges with the board config, so only the image gets a configroot.
+if [[ "$(jq -r .Format "$MKOSI_CONFIG")" != sysext ]]; then
+    create_configroot "$FLATCAR_UPDATE_GROUP"
+    set_image_profile "$FLATCAR_IMAGE_PROFILE"   # build_image_util.sh:156
+fi
 
 
 echo "prepare[base]: pre-install steps"

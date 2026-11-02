@@ -326,6 +326,8 @@ emerge_from_source() {
     "${SDK_ENV_SCRUB[@]}" \
     DISTDIR="${DISTDIR}" \
     PATH="$(sdk_clean_path)" \
+    KBUILD_BUILD_USER="${BUILD_USER:-build}" \
+    KBUILD_BUILD_HOST="${BUILD_HOST:-pony-truck.infra.kinvolk.io}" \
     FEATURES="-ebuild-locks -merge-wait -sandbox -usersandbox -network-sandbox -pid-sandbox -ipc-sandbox${FEATURES:+ ${FEATURES}}" \
         "emerge-${board}" \
         "--update" \

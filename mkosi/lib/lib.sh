@@ -82,7 +82,7 @@ unset _sdk_errexit
 # build_image_util.sh: the latter sources sbsign_util.sh, which calls
 # get_sdk_libdir() at load time, and that function lives in toolchain_util.sh.
 . "${SDK_SCRIPTS}/build_library/toolchain_util.sh" # for get_board_arch, get_sdk_libdir
-. "${SDK_SCRIPTS}/build_library/board_options.sh" # for pkg_version
+. "${SDK_SCRIPTS}/build_library/board_options.sh" # for pkg_version, pkg_use_enabled
 . "${SDK_SCRIPTS}/build_library/build_image_util.sh"
 . "${SDK_SCRIPTS}/build_library/prod_image_util.sh"
 . "${SDK_SCRIPTS}/build_library/vm_image_util.sh" # for _write_qemu_uefi_conf

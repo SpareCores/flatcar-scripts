@@ -41,6 +41,11 @@ grep -q 'selinux=0' "${grub_tmp}/grub.cfg" || { echo "grub.cfg: selinux=0 sed di
 tar cf "${esp}/flatcar/grub/grub.cfg.tar" -C "${grub_tmp}" grub.cfg
 rm -rf "${grub_tmp}"
 
+# grub.cfg builds the command line at boot (USR slot, first boot, console, OEM).
+if [[ "$(jq '.KernelCommandLine // [] | length' "${MKOSI_CONFIG}")" != 0 ]]; then
+    echo "WARNING: KernelCommandLine= is ignored: Flatcar's grub.cfg builds the kernel command line at boot; add kernel arguments to the grub.cfg seeding in mkosi.postinst" >&2
+fi
+
 # build_image_util.sh finish_image():823-846, EFI target only: i386-pc and
 # x86_64-xen need a loop-mounted disk, which does not exist yet.
 case "${BOARD}" in

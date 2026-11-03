@@ -176,10 +176,14 @@ echo ID=_any | tee "${root_fs_dir}/usr/lib/confexts/00-flatcar-default/etc/exten
 # The trust anchor is installed by mkosi itself (configure_verity_certificate()
 # copies VerityCertificate= to /usr/lib/verity.d), so the image carries exactly
 # one anchor and the build stays reproducible.
+verity_key="$(jq -r '.VerityKey // empty' "${MKOSI_CONFIG}")"
+verity_cert="$(jq -r '.VerityCertificate // empty' "${MKOSI_CONFIG}")"
+[[ -n "${verity_key}" && -n "${verity_cert}" ]] || die "VerityKey= and VerityCertificate= must be set to sign the default confext"
+[[ "$(jq -r '.VerityKeySource.Type' "${MKOSI_CONFIG}")" == file ]] || die "VerityKeySource= must be a file to sign the default confext"
 systemd-repart \
   --make-ddi=confext \
-  --private-key="${SRCDIR}/mkosi.key" \
-  --certificate="${SRCDIR}/mkosi.crt" \
+  --private-key="${verity_key}" \
+  --certificate="${verity_cert}" \
   --copy-source="${root_fs_dir}/usr/lib/confexts/00-flatcar-default" \
   "${root_fs_dir}/usr/lib/confexts/00-flatcar-default.raw"
 rm -rf "${root_fs_dir}/usr/lib/confexts/00-flatcar-default"

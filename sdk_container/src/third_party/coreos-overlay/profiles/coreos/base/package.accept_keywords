@@ -10,6 +10,9 @@
 # Keep versions on both arches in sync.
 =app-admin/logrotate-3.22.0-r1
 
+# Image builds under mkosi need 27+; Gentoo only has 25.3 (local bump).
+=app-admin/mkosi-27.1
+
 # To address CVE-2026-41991 (has no keywords)
 =app-arch/gzip-1.14_p20260502 **
 

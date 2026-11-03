@@ -24,7 +24,7 @@ done
 
 root="/build/${board}"
 pkgdir="$(PORTAGE_CONFIGROOT="${root}" portageq envvar PKGDIR)"
-repos=(/mnt/host/source/src/third_party/{coreos-overlay,portage-stable})
+repos=(/mnt/host/source/src/third_party/{coreos-overlay,gentoo})
 run() { echo "+ $*"; [[ ${dry_run} -eq 1 ]] || "$@"; }
 
 mapfile -t kmod_pkgs < <(

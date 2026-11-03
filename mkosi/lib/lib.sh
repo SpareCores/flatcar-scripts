@@ -92,6 +92,7 @@ unset _sdk_errexit
 # into the sandbox. Same rule as BOARD/BUILD_DIR -- exports placed above the
 # `.` lines are advisory.
 export DISTDIR="/work/src/distfiles"
+export PORTAGE_DEPCACHEDIR="/work/src/edb-dep"
 
 [[ "${MKOSI_DEBUG:-0}" == "1" ]] && set -x
 

@@ -85,7 +85,8 @@ for databasefile in passwd group shadow gshadow; do
   rm -f "${root_fs_dir}/etc/${databasefile}" "${root_fs_dir}/etc/${databasefile}-"
 done
 # Generate tmpfiles rules that recreate the /var skeleton at boot. Ignore paths
-# already covered by existing tmpfiles configs, and
+# already covered by existing tmpfiles configs; the first pass also skips dirs
+# owned by users flatcar-tmpfiles does not copy, the second records the rest.
 ignores=() allowed_users=() allowed_groups=()
 mapfile -t ignores < <(awk '/^[dDfFL]/ {print "--ignore=" $2}' \
                            "${root_fs_dir}"/usr/lib/tmpfiles.d/*.conf)
@@ -101,7 +102,7 @@ mapfile -t ignores < <(awk '/^[dDfFL]/ {print "--ignore=" $2}' \
                            "${root_fs_dir}"/usr/lib/tmpfiles.d/*.conf)
 "${SDK_SCRIPTS}/build_library/gen_tmpfiles.py" --root="${root_fs_dir}" \
     --output="${root_fs_dir}/usr/lib/tmpfiles.d/base_image_var_late.conf" \
-    "${ignores[@]}" "${allowed_users[@]}" "${allowed_groups[@]}" "${root_fs_dir}/var"
+    "${ignores[@]}" "${root_fs_dir}/var"
 
 cat > "${root_fs_dir}/boot/flatcar/first_boot" <<EOF
 If this file exists, Ignition will run and then delete the file.

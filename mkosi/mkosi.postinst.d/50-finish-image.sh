@@ -114,6 +114,11 @@ if pkg_use_enabled coreos-base/coreos selinux; then
   mkosi-chroot bash -c "cd /usr/share/selinux/mcs && semodule -s mcs -i *.pp"
 fi
 
+# mkosi's run_hwdb() moved the hwdb to /usr and deleted /etc/udev/hwdb.bin;
+# restore what the systemd ebuild ships (udevadm hwdb --update into /etc).
+mkosi-chroot systemd-hwdb update
+rm -f "${root_fs_dir}/usr/lib/udev/hwdb.bin"
+
 # Populate /etc via tmpfiles before freezing it into /usr/share/flatcar/etc
 # tmpfiles needs all users/groups in /etc/passwd first; seed them from
 # baselayout

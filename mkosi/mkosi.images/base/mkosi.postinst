@@ -27,6 +27,12 @@ mkdir -p /sys
 run_ldconfig "${root_fs_dir}"    # build_image_util.sh:105
 run_localedef "${root_fs_dir}"   # build_image_util.sh:110
 
+# mkosi runs `systemctl preset-all` after postinst with no way to disable it;
+# upstream never runs it. Ignore every unit until mkosi.finalize drops these.
+for d in system-preset user-preset; do
+  install -D -m 0644 /dev/stdin "${root_fs_dir}/usr/lib/systemd/${d}/00-mkosi-ignore.preset" <<<"ignore *"
+done
+
 # Stop here: this is the root create_prod_image() snapshots for sysexts
 # (prod_image_util.sh:136-139). Sysexts build on %O/base, so the clean-ups
 # and /etc freeze that follow live in the main image (mkosi.postinst.d/).

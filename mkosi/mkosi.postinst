@@ -6,7 +6,7 @@
 # create_prod_sysext(): each signed DDI is installed under the verity'd /usr at
 #   /usr/share/flatcar/sysext/<name>.raw
 # with a merge symlink
-#   /etc/extensions/<name>.raw -> ../../usr/share/flatcar/sysext/<name>.raw
+#   /etc/extensions/<name>.raw -> /usr/share/flatcar/sysext/<name>.raw
 # so systemd-sysext merges them unconditionally at boot (no download, no
 # enabled-sysext.conf toggle — that path is for version-coupled downloadable
 # sysexts, not these baked-in defaults).
@@ -79,7 +79,7 @@ for name in "${builtin_sysexts[@]}"; do
     fi
 
     install -m 0644 "${src}" "${sysext_dir}/${name}.raw"
-    ln -sf "../../usr/share/flatcar/sysext/${name}.raw" "${ext_dir}/${name}.raw"
+    ln -sf "/usr/share/flatcar/sysext/${name}.raw" "${ext_dir}/${name}.raw"
     echo "[builtin-sysext] baked ${name}.raw into /usr + /etc/extensions symlink"
 done
 

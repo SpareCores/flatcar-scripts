@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Generate /usr/share/licenses/licenses.json.bz2 for the final image.
+# Generate /usr/share/licenses/licenses.json.bz2 and the extra SLSA files for the final image.
 #
 # Calls upstream write_licenses()/insert_licenses() (build_library/build_image_util.sh)
 # -- the same functions prod_image_util.sh uses -- over a rootfs whose /var/db/pkg
@@ -40,6 +40,8 @@ shopt -u nullglob
 json="${work}/licenses.json"
 write_licenses "${merged}" "${json}"
 insert_licenses "${json}" "${root}"
+# Same spot as prod_image_util.sh:126: SLSA for packages only in the initrd/ESP.
+insert_extra_slsa "${root}"
 
 pkgs=$(grep -c '"project"' "${json}" 2>/dev/null || true)
 echo "[licenses] wrote licenses.json.bz2 (${pkgs:-0} packages)"

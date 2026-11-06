@@ -18,6 +18,25 @@ blob="${root}/usr.img"          # repart CopyBlocks=/usr.img (resolves under --r
 [[ -d "${usr_dir}" ]] || { echo "[verity] ${usr_dir} missing" >&2; exit 1; }
 [[ -f "${kernel}"  ]] || { echo "[verity] ${kernel} missing" >&2; exit 1; }
 
+# The host's SELinux labels the build tree (e.g. user_home_t), and mkfs.btrfs
+# --rootdir copies those labels into USR-A. Upstream /usr is unlabeled_t apart
+# from the setfiles-labelled /usr/share/flatcar/etc, so match that. The kernel
+# refuses to remove security.selinux, but allows changing it.
+python3 - "${usr_dir}" <<'EOF'
+import os, sys
+usr = sys.argv[1]
+keep = os.path.join(usr, "share/flatcar/etc")
+label = b"system_u:object_r:unlabeled_t:s0\0"
+for dp, dns, fns in os.walk(usr):
+    dns[:] = [d for d in dns if os.path.join(dp, d) != keep]
+    for p in [dp] + [os.path.join(dp, n) for n in fns]:
+        os.setxattr(p, "security.selinux", label, follow_symlinks=False)
+    for d in dns:
+        p = os.path.join(dp, d)
+        if os.path.islink(p):
+            os.setxattr(p, "security.selinux", label, follow_symlinks=False)
+EOF
+
 verity_offset=64   # amd64 rdev field in the kernel; grub reads the hash here (arm64: 512)
 block_size=4096
 

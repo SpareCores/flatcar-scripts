@@ -18,27 +18,6 @@ blob="${root}/usr.img"          # repart CopyBlocks=/usr.img (resolves under --r
 [[ -d "${usr_dir}" ]] || { echo "[verity] ${usr_dir} missing" >&2; exit 1; }
 [[ -f "${kernel}"  ]] || { echo "[verity] ${kernel} missing" >&2; exit 1; }
 
-# Terminal image (nothing emerges past here): drop portage's DB from ROOT. The
-# base postinst keeps it so the grub/oem-qemu overlays emerge incrementally.
-rm -rf "${root}/var/db/pkg" "${root}/var/cache/edb"
-
-# mkosi's emerge, sysusers, tmpfiles and preset passes run on this Packages-less
-# image after the base postinst removed /etc, repopulating it (portage config,
-# passwd, profile.d symlinks, preset wants). Upstream ROOT ships no /etc; it's
-# the /usr/share/flatcar/etc + confext overlay at boot (kola cl.overlay.cleanup).
-rm -rf "${root}/etc"
-
-# TODO(mkosi-fork): same root cause — mkosi's Emerge (run on the final
-# Packages-less image too) repopulates /var in context.root AFTER the base
-# postinst emptied it (net-firewall/nftables' pkg_postinst re-touches
-# /var/lib/nftables/rules-save mode 600, plus emerge logs, nfs/portage state).
-# Fork fix: don't repopulate /var (or empty it) for a Packages-less image, so it
-# ships empty like upstream and the dir skeleton is recreated at boot from
-# tmpfiles (base_image_var{,_late}.conf). Until then strip here (terminal image:
-# var/db/pkg + var/cache/edb already dropped above) — every remaining regular
-# file, symlink and .keep under /var, leaving only the tmpfiles-recreatable dirs.
-find "${root}/var" -mindepth 1 \( -type f -o -type l \) -delete 2>/dev/null || true
-
 verity_offset=64   # amd64 rdev field in the kernel; grub reads the hash here (arm64: 512)
 block_size=4096
 

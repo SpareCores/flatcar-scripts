@@ -14,6 +14,10 @@ set -eo pipefail
 . "${SRCDIR}/lib/lib.sh"
 create_configroot "$FLATCAR_UPDATE_GROUP"
 set_image_profile "$FLATCAR_IMAGE_PROFILE"   # build_image_util.sh:156
+# extract_prod_gcc (base mkosi.prepare) recorded gcc in package.provided, but
+# that went into the base image's own $ARTIFACTDIR; repeat it for this configroot
+# so write_licenses lists gcc like upstream.
+package_provided "$(get_binary_pkg sys-devel/gcc)"
 
 root="${BUILDROOT:?BUILDROOT must be set by mkosi}"
 

@@ -145,6 +145,5 @@ the build then fails with:
 Run `./build_packages --board=amd64-usr` in the SDK first.
 
 Still open, see `../docs/mkosi-in-sdk-implementation-draft.md`:
-`mkosi.postinst` still calls the removed `gen-licenses.sh` (should call upstream
-`write_licenses`); plus eselect symlinks, os-release provenance, and verity/seal
+eselect symlinks, os-release provenance, and verity/seal
 ordering.

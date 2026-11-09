@@ -11,8 +11,8 @@ find "${root_fs_dir}/var" -mindepth 1 \
 
 for folder in "${root_fs_dir}/"*; do
   case "${folder#${root_fs_dir}}" in
-    # /efi and /oem-tree: 05-esp-oem.sh staged the ESP and OEM contents there.
-    /boot|/usr|/oem|/var|/dev|/proc|/efi|/oem-tree)
+    # /efi: 05-esp.sh staged the ESP there.
+    /boot|/usr|/oem|/var|/dev|/proc|/efi)
       # keep
       :
       ;;

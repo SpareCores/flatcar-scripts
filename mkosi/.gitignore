@@ -4,7 +4,4 @@
 /mkosi.rootpw
 /mkosi.key
 /mkosi.crt
-/mkosi.profiles/oem-*/oem-tree/sysext/oem-*-*.raw
-/mkosi.profiles/oem-*/oem-tree/sysext/active-oem-*
-/mkosi.profiles/oem-*/oem-tree/oem-release
 /scripts

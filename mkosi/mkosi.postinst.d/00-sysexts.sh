@@ -16,6 +16,10 @@
 # is bind-mounted at $SRCDIR.
 . "${SRCDIR}/lib/postinst.sh"
 
+# Names must match the sub-images' Output=/ImageId=.
+builtin_sysexts="$(sdk_base_sysexts | cut -d'|' -f1)"
+mapfile -t builtin_sysexts <<<"${builtin_sysexts}"
+
 sysext_dir="${root_fs_dir}/usr/share/flatcar/sysext"
 ext_dir="${root_fs_dir}/etc/extensions"
 install -d -m 0755 "${sysext_dir}" "${ext_dir}"

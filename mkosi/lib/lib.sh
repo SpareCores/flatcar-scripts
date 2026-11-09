@@ -25,6 +25,18 @@ sdk_board() {
 
 export SDK_SCRIPTS="/mnt/host/source/src/scripts"
 
+# build_image's --base_sysexts default, one "name|pkg[&pkg...]" per line. The
+# flag default is its only definition; build_image refuses root, so read
+# --help (printed on stderr) as nobody. chroot --userspec is the coreutils way
+# to switch users; the SDK has no setpriv/runuser/su.
+sdk_base_sysexts() {
+  local help list
+  help="$(cd "${SDK_SCRIPTS}" && chroot --userspec=nobody:nobody --skip-chdir / ./build_image --help 2>&1)"
+  list="$(sed -n "/--base_sysexts:/,/(default:/ s/.*(default: '\(.*\)')\$/\1/p" <<<"${help}")"
+  [[ -n "${list}" ]] || die "No --base_sysexts default in '${SDK_SCRIPTS}/build_image --help' output"
+  tr ',' '\n' <<<"${list}"
+}
+
 # BuildSources= mounts the board sysroot at /work/src/build (mkosi re-roots
 # every target under /work/src). The cross toolchain's --sysroot, make.conf and
 # the setup_board wrappers all hardcode /build, so restore that path.

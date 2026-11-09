@@ -9,7 +9,3 @@ set -euo pipefail
 . "${SRCDIR}/lib/lib.sh"
 
 root_fs_dir="${BUILDROOT:?BUILDROOT must be set by mkosi}"
-
-# Flatcar's built-in sysexts (build_image:42 base_sysexts). Names must match the
-# sub-images' Output=/ImageId=.
-builtin_sysexts=(containerd-flatcar docker-flatcar)

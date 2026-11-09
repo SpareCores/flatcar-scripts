@@ -33,6 +33,9 @@ for d in system-preset user-preset; do
   install -D -m 0644 /dev/stdin "${root_fs_dir}/usr/lib/systemd/${d}/00-mkosi-ignore.preset" <<<"ignore *"
 done
 
+# mkosi always writes this for kernel-install's sake; it would land on the ESP.
+rm -rf "${root_fs_dir}/boot/loader"
+
 # Stop here: this is the root create_prod_image() snapshots for sysexts
 # (prod_image_util.sh:136-139). Sysexts build on %O/base, so the clean-ups
 # and /etc freeze that follow live in the main image (mkosi.postinst.d/).

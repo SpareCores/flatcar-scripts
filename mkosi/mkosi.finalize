@@ -18,8 +18,10 @@ blob="${root}/usr.img"          # repart CopyBlocks=/usr.img (resolves under --r
 [[ -d "${usr_dir}" ]] || { echo "[verity] ${usr_dir} missing" >&2; exit 1; }
 [[ -f "${kernel}"  ]] || { echo "[verity] ${kernel} missing" >&2; exit 1; }
 
-# configure_clock() touches this after postinst unconditionally; upstream has none.
-rm -f "${usr_dir}/lib/clock-epoch"
+# configure_clock() touches this after postinst unconditionally, and
+# fixup_vmlinuz_location() copies /boot/vmlinuz-<kver> next to the modules;
+# upstream has neither.
+rm -f "${usr_dir}/lib/clock-epoch" "${usr_dir}"/lib/modules/*/vmlinuz
 
 # The host's SELinux labels the build tree (e.g. user_home_t), and mkfs.btrfs
 # --rootdir copies those labels into USR-A. Upstream /usr is unlabeled_t apart

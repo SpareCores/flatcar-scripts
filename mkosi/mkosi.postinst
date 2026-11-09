@@ -86,6 +86,6 @@ done
 # Generate /usr/share/licenses/licenses.json.bz2 in the verity'd /usr so it is
 # always present even when a test masks the docker/containerd sysexts. Upstream
 # ships this manifest; kola sysext.custom-docker.sysext reads the Docker version
-# from it. Covers base + every sysext: each sysext saves its pkgdb via
-# tools/save-pkgdb.sh and write-licenses.sh merges them before generating.
-"${SRCDIR}/tools/write-licenses.sh"
+# from it. Covers base + the built-in sysexts, whose pkgdbs tools/save-pkgdb.sh
+# saved.
+"${SRCDIR}/tools/write-licenses.sh" "${builtin_sysexts[@]}"

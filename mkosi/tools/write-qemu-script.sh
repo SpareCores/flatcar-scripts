@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Emit the upstream qemu launcher next to image.raw by calling upstream's own
+# Emit the upstream qemu launcher next to the disk image ($1, default
+# image.raw) by calling upstream's own
 # _write_qemu_uefi_conf() (build_library/vm_image_util.sh) -- the same function
 # image_to_vm.sh uses -- rather than reimplementing its sed/cp logic here.
 #
@@ -16,7 +17,7 @@
 # --extra-search-path= override applies. The generated script is plain qemu and
 # runs on the host, where KVM is.
 #
-# Runs as a post-output script, so image.raw is already in $OUTPUTDIR.
+# Runs as a post-output script, so the image is already in $OUTPUTDIR.
 set -euo pipefail
 
 [[ "${MKOSI_DEBUG:-0}" == "1" ]] && set -x
@@ -27,7 +28,7 @@ export ARTIFACTDIR="${ARTIFACTDIR:-$(mktemp -d)}"
 . "${SRCDIR}/lib/lib.sh"
 
 outdir="${OUTPUTDIR:?OUTPUTDIR must be set by mkosi}"
-img="${outdir}/image.raw"
+img="${1:-${outdir}/image.raw}"
 # [[ -f "${img}" ]] || { echo "[qemu-script] ${img} not found, skipping"; exit 0; }
 
 # shellcheck source=tools/bin/sdk-env.sh
@@ -39,7 +40,7 @@ util="${SDK_SCRIPTS}/build_library/vm_image_util.sh"
 # Upstream expects the image to sit next to the script it generates, named
 # <prefix>_image.bin: _dst_name() derives every output name from $VM_SRC_IMG,
 # and _write_qemu_conf points VM_IMAGE= at $(basename $VM_DST_IMG). Link
-# image.raw to BOTH so the names resolve and the launcher finds the disk.
+# the image to BOTH so the names resolve and the launcher finds the disk.
 src_img="${outdir}/flatcar_production_image.bin"
 dst_img="${outdir}/flatcar_production_qemu_uefi_image.bin"
 ln -sf "$(basename "${img}")" "${src_img}"

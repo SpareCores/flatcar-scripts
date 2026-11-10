@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: LGPL-2.1-or-later
 #
-# Pin the disk GPT GUID of the final image.raw to Flatcar's well-known base value
+# Pin the disk GPT GUID of the final disk image to Flatcar's well-known base value
 # 00000000-0000-0000-0000-000000000001 (upstream sets it via disk_util -g).
 #
 # systemd-repart derives the disk GUID by hashing --seed, giving a random value.
@@ -16,11 +16,20 @@ set -euo pipefail
 
 [[ "${MKOSI_DEBUG:-0}" == "1" ]] && set -x
 
-img="${OUTPUTDIR:?OUTPUTDIR must be set by mkosi}/image.raw"
+# Output= differs per OEM profile (image, flatcar_production_<vm>_image, ...).
+img="${OUTPUTDIR:?OUTPUTDIR must be set by mkosi}/$(jq -r .Output "${MKOSI_CONFIG}").raw"
 [[ -f "${img}" ]] || { echo "[postoutput] ${img} not found, skipping disk-GUID pin"; exit 0; }
 
-sgdisk -U 00000000-0000-0000-0000-000000000001 "${img}" >/dev/null
-echo "[postoutput] pinned image.raw disk GUID to 00000000-0000-0000-0000-000000000001"
+# repart ends the disk right after the backup GPT; upstream images are a whole
+# number of MiB, which image_to_vm.sh's assert_image_size requires (vhd, ...).
+# -e moves the backup GPT to the new end.
+truncate --size=%1M "${img}"
+sgdisk -e -U 00000000-0000-0000-0000-000000000001 "${img}" >/dev/null
+echo "[postoutput] pinned ${img##*/} disk GUID to 00000000-0000-0000-0000-000000000001"
 
-# Emit the upstream-style qemu launcher next to the image.
-"${SRCDIR}/tools/write-qemu-script.sh"
+# OEM profiles: the vendor format. Default image: the upstream qemu launcher.
+if [[ -n "${FLATCAR_VM_TYPE:-}" ]]; then
+  "${SRCDIR}/tools/write-vm-image.sh" "${img}"
+else
+  "${SRCDIR}/tools/write-qemu-script.sh" "${img}"
+fi

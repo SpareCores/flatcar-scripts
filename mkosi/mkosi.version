@@ -1,12 +1,9 @@
 #!/usr/bin/env bash
 # Emit the image version for mkosi (%v / ImageVersion=).
 #
-# Read from the SDK versionfile so it always matches the OS being built. %v is
-# used to name the OEM sysext (mkosi.profiles/oem-qemu) as
-# oem-qemu-<VERSION>.raw; the running OS looks for exactly that filename in the
-# OEM partition, and an empty/incorrect version makes it fall back to fetching
-# an update payload, which fails offline with GetRequestFailed(404) and aborts
-# the boot in initrd-setup-root-after-ignition.
+# Read from the SDK versionfile so it always matches the OS being built; hooks
+# see it as $IMAGE_VERSION, which lib.sh hands to build_library as
+# FLAGS_version.
 #
 # mkosi runs this for every verb, including ones that only consume an existing
 # image (vm, shell, ...) and may run outside the SDK container where the

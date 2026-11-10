@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# The tail of build_sysext for every sysext: run upstream's
-# build_library/sysext_mangle_<name> (--manglefs_script), then write the
-# extension-release, replacing mkosi's (which adds SYSEXT_LEVEL/SYSEXT_SCOPE and
-# uses ImageVersion= as SYSEXT_VERSION_ID). As a finalize script it sees only the
+# The tail of build_sysext for every sysext: run upstream's mangle script
+# (--manglefs_script), then write the extension-release, replacing mkosi's
+# (which adds SYSEXT_LEVEL/SYSEXT_SCOPE and uses ImageVersion= as
+# SYSEXT_VERSION_ID). As a finalize script it sees only the
 # overlay's upper layer, which is what build_sysext passes after unmounting its
 # overlay.
 set -euo pipefail
@@ -12,7 +12,12 @@ set -euo pipefail
 . "${SRCDIR}/lib/lib.sh"
 
 SYSEXT_ID="$(jq -r '.Output' "${MKOSI_CONFIG}")"
+mapfile -t packages < <(jq -r '.Packages[]' "${MKOSI_CONFIG}")
 mangle="${BUILD_LIBRARY_DIR}/sysext_mangle_${SYSEXT_ID}"
+# OEM sysexts use their metapackage's files/manglefs.sh (create_oem_sysexts).
+if [[ ${SYSEXT_ID} == oem-* ]]; then
+  mangle="$(portageq get_repo_path / coreos-overlay)/${packages[0]}/files/manglefs.sh"
+fi
 if [[ -x "${mangle}" ]]; then
   "${mangle}" "${BUILDROOT}"
 else
@@ -21,7 +26,6 @@ fi
 
 # build_sysext:236-240, 293-305 from here on.
 ARCH="$(jq -r '.Architecture' "${MKOSI_CONFIG}")"
-mapfile -t packages < <(jq -r '.Packages[]' "${MKOSI_CONFIG}")
 FLATCAR_VERSION_ID="$(. "${SRCDIR}/mkosi.output/base/usr/lib/os-release"; echo "${VERSION_ID}")"
 
 # If there's only one package, grab its metadata for the sysext.

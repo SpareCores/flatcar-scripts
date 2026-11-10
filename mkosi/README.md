@@ -11,7 +11,7 @@ From inside the SDK container, in this directory:
 
     mkosi build                       # amd64 (default)
     mkosi -a arm64 build              # arm64
-    mkosi --profile oem-qemu build    # add the OEM partition
+    mkosi --profile oem-qemu build    # qemu_uefi image (also oem-azure, oem-ami, oem-gce)
 
 i.e. from the host: `./run_sdk_container … sudo mkosi build`.
 
@@ -51,9 +51,9 @@ and falls back to plain `emerge` with explicit `--config-root`/`--sysroot`
     tools/bin/mkosi-*           package-manager helpers -> SDK emerge
     tools/bin/lib.sh            board mapping + emerge invocation
     mkosi.images/base/          the OS tree (coreos-base/coreos)
-    mkosi.images/*-sysext/      built-in sysexts (containerd, docker) + oem-qemu
+    mkosi.images/*-sysext/      built-in, extra and OEM sysexts
     mkosi.images/{grub,gcc-runtime}/   build-tooling overlays, nothing ships
-    mkosi.profiles/oem-qemu/    vendors the OEM sysext into the OEM partition
+    mkosi.profiles/oem-*/       per-vendor image: OEM sysext, disk layout, output name
     mkosi.repart/               partition layout (verity /usr, ESP, ROOT, OEM)
 
 Every sub-image that installs packages sets `PrepareScripts=%D/tools/prepare.sh`

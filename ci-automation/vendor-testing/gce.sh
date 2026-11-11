@@ -26,6 +26,7 @@ GCP_JSON_KEY_PATH=''
 secret_to_file GCP_JSON_KEY_PATH "${GCP_JSON_KEY}"
 
 copy_from_buildcache "${IMAGES_BUILDCACHE_DIR}/${CIA_ARCH}/${CIA_VERNUM}/${GCE_IMAGE_NAME}" .
+print_image_origin "${GCE_IMAGE_NAME}" "${GCE_IMAGE_NAME}"
 # The suffix keeps a mkosi test run off the GCS object and GCE image of the regular one.
 gce_version="${CIA_VERNUM}${TEST_RUN_SUFFIX:-}"
 gcloud auth activate-service-account --key-file "${GCP_JSON_KEY_PATH}"

@@ -31,6 +31,7 @@ if [[ "${AWS_AMI_ID}" == "" ]]; then
     else
         echo "++++ ${CIA_TESTSCRIPT}: downloading ${tarball} for ${CIA_VERNUM} (${CIA_ARCH}) ++++"
         copy_from_buildcache "${IMAGES_BUILDCACHE_DIR}/${CIA_ARCH}/${CIA_VERNUM}/${tarball}" .
+        print_image_origin "${tarball}" "${tarball}"
         lbunzip2 "${tarball}"
     fi
 

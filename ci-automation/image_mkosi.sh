@@ -94,8 +94,8 @@ function _image_mkosi_build_impl() {
 
     local mkosi_arch default_profiles
     case "${arch}" in
-        amd64) mkosi_arch=x86-64; default_profiles="oem-azure oem-ami oem-gce";;
-        arm64) mkosi_arch=arm64; default_profiles="oem-azure oem-ami";;
+        amd64) mkosi_arch=x86-64; default_profiles="oem-azure oem-ami oem-gce oem-openstack oem-hetzner oem-akamai oem-stackit oem-oraclecloud";;
+        arm64) mkosi_arch=arm64; default_profiles="oem-azure oem-ami oem-openstack oem-hetzner oem-akamai oem-stackit oem-oraclecloud";;
         *) echo "Unsupported architecture '${arch}'" >&2; return 1;;
     esac
     local -a profiles
@@ -140,26 +140,31 @@ function _image_mkosi_build_impl() {
     local images_out="images-mkosi"
     rm -rf "${images_out}"
     mkdir -p "${images_out}"
-    local -a images=( "image.raw:flatcar_production_image.bin" )
+    # source:destination:compression; vms.sh picks the same compression per
+    # format for image_to_vm.sh.
+    local -a images=( "image.raw:flatcar_production_image.bin:bz2" )
     for profile in "${profiles[@]}"; do
         case "${profile}" in
-            oem-azure) images+=( flatcar_production_azure_image.vhd );;
-            oem-ami)   images+=( flatcar_production_ami_image.bin );;
-            oem-gce)   images+=( flatcar_production_gce.tar.gz );;
-            oem-qemu)  images+=( flatcar_production_qemu_uefi_image.img flatcar_production_qemu_uefi.sh );;
+            oem-azure)       images+=( flatcar_production_azure_image.vhd::bz2 );;
+            oem-ami)         images+=( flatcar_production_ami_image.bin::bz2 );;
+            oem-gce)         images+=( flatcar_production_gce.tar.gz:: );;
+            oem-qemu)        images+=( flatcar_production_qemu_uefi_image.img::bz2 flatcar_production_qemu_uefi.sh:: );;
+            oem-openstack)   images+=( flatcar_production_openstack_image.img:: );;
+            oem-hetzner)     images+=( flatcar_production_hetzner_image.bin::bz2 );;
+            oem-akamai)      images+=( flatcar_production_akamai_image.bin::gz );;
+            oem-stackit)     images+=( flatcar_production_stackit_image.img:: );;
+            oem-oraclecloud) images+=( flatcar_production_oraclecloud_image.img:: );;
             *) echo "No known image for mkosi profile '${profile}'" >&2; return 1;;
         esac
     done
-    # Disk images get bzip2'd, as build_image --only_store_compressed and
-    # image_to_vm.sh do.
-    local entry src dst
+    local entry src dst compression
     for entry in "${images[@]}"; do
-        src="${entry%%:*}"
-        dst="${entry#*:}"
+        IFS=: read -r src dst compression <<<"${entry}"
+        dst="${dst:-${src}}"
         ./run_sdk_container -n "${image_container}" -C "${packages_image}" \
                 -v "${vernum}" \
-                bash -c 'sudo mv "mkosi/mkosi.output/$1" "$2" && sudo chown "$(id -u):$(id -g)" "$2" && case "$2" in *.bin|*.vhd|*.img) lbzip2 -f "$2";; esac' -- \
-                "${src}" "${images_out}/${dst}"
+                bash -c 'sudo mv "mkosi/mkosi.output/$1" "$2" && sudo chown "$(id -u):$(id -g)" "$2" && case "$3" in bz2) lbzip2 -f "$2";; gz) pigz -f "$2";; esac' -- \
+                "${src}" "${images_out}/${dst}" "${compression}"
     done
 
     create_digests "${SIGNER}" "${images_out}/"*

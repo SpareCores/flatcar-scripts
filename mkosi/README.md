@@ -11,7 +11,8 @@ From inside the SDK container, in this directory:
 
     mkosi build                       # amd64 (default)
     mkosi -a arm64 build              # arm64
-    mkosi --profile oem-qemu build    # qemu_uefi image (also oem-azure, oem-ami, oem-gce)
+    mkosi --profile oem-qemu build    # qemu_uefi image (also oem-azure, oem-ami, oem-gce, oem-openstack,
+                                      # oem-hetzner, oem-akamai, oem-stackit, oem-oraclecloud)
 
 i.e. from the host: `./run_sdk_container … sudo mkosi build`.
 

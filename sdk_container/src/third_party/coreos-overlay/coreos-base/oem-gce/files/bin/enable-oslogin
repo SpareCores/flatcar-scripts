@@ -3,14 +3,6 @@
 # Verify all the config files were not touched by the user. Do not try to
 # enable oslogin if the user has messed with them
 
-# OS Login is only shipped in /usr on amd64 (sys-auth/google-oslogin).
-# Linking /etc/nsswitch.conf to a file that does not exist breaks all
-# user and group lookups (dbus, sshd, ... fail to start).
-if [[ ! -e '/usr/share/google-oslogin/nsswitch.conf' ]]; then
-	echo 'OS Login is not installed in /usr. Not enabling OS Login'
-	exit 0
-fi
-
 if [ -e '/etc/pam.d/sshd' ]; then
 	echo '/etc/pam.d/sshd already exists. Not enabling OS Login'
 	exit 0

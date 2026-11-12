@@ -1,0 +1,1 @@
+- GCE: Fixed SSH logins through OS Login (broken since Stable 4230.2.0): systemd's `20-systemd-userdb.conf` sshd drop-in took precedence over the OS Login `AuthorizedKeysCommand`. Both are now chained, and nodes that enabled OS Login on an older release get the fix on their next boot after the update ([Flatcar#2496](https://github.com/flatcar/Flatcar/issues/2496))

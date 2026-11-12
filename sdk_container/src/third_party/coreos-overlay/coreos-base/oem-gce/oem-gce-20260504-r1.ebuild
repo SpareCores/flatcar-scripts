@@ -25,7 +25,7 @@ RDEPEND="
 SYSEXT_NAME="Google Compute Engine"
 
 src_install() {
-	systemd_dounit "${FILESDIR}"/units/{oem-gce,oem-gce-enable-oslogin,setup-oem}.service
+	systemd_dounit "${FILESDIR}"/units/{oem-gce,oem-gce-enable-oslogin,oem-gce-oslogin-migrate,setup-oem}.service
 	systemd_install_dropin multi-user.target "${FILESDIR}"/units/10-oem-gce.conf
 	systemd_enable_service multi-user.target ntpd.service
 

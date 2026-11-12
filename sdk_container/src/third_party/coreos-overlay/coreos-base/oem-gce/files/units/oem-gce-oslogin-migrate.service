@@ -1,0 +1,21 @@
+[Unit]
+Description=Move the GCE OS Login sshd drop-in before systemd's
+DefaultDependencies=false
+After=systemd-tmpfiles-setup.service
+After=oem-gce-enable-oslogin.service
+Before=sshd.service
+Before=sshd.socket
+ConditionPathIsSymbolicLink=/etc/ssh/sshd_config.d/60-flatcar-google-oslogin.conf
+ConditionPathIsSymbolicLink=!/etc/ssh/sshd_config.d/10-flatcar-google-oslogin.conf
+ConditionPathExists=!/etc/ssh/sshd_config.d/10-flatcar-google-oslogin.conf
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+
+# Only touch the link that enable-oslogin created on the first boot.
+ExecCondition=/usr/bin/test /etc/ssh/sshd_config.d/60-flatcar-google-oslogin.conf -ef /usr/share/google-oslogin/60-flatcar-google-oslogin.conf
+ExecStart=/usr/bin/ln --symbolic /usr/share/google-oslogin/60-flatcar-google-oslogin.conf /etc/ssh/sshd_config.d/10-flatcar-google-oslogin.conf
+
+[Install]
+WantedBy=sysinit.target

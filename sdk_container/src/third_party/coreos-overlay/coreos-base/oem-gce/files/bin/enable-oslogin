@@ -1,5 +1,15 @@
 #!/usr/bin/bash
 
+# The drop-in used to be linked as 60-flatcar-google-oslogin.conf, which
+# sshd reads after systemd's 20-systemd-userdb.conf, so the latter's
+# AuthorizedKeysCommand won. Nodes enabled by older releases only have
+# that link, so add the one that sorts first. The old link stays, it
+# points to the same file and keeps a rollback to the old release
+# bootable.
+if [ "$(readlink '/etc/ssh/sshd_config.d/60-flatcar-google-oslogin.conf')" = '/usr/share/google-oslogin/60-flatcar-google-oslogin.conf' ]; then
+	ln -f -s '/usr/share/google-oslogin/60-flatcar-google-oslogin.conf' '/etc/ssh/sshd_config.d/10-flatcar-google-oslogin.conf'
+fi
+
 # Verify all the config files were not touched by the user. Do not try to
 # enable oslogin if the user has messed with them
 
@@ -30,6 +40,6 @@ mkdir -m 0750 -p '/var/lib/google-sudoers.d'
 mkdir -m 0750 -p '/var/lib/google-users.d'
 ln -f -s '/usr/share/google-oslogin/pam_sshd' '/etc/pam.d/sshd'
 ln -f -s '/usr/share/google-oslogin/nsswitch.conf' '/etc/nsswitch.conf'
-ln -f -s '/usr/share/google-oslogin/60-flatcar-google-oslogin.conf' '/etc/ssh/sshd_config.d/60-flatcar-google-oslogin.conf'
+ln -f -s '/usr/share/google-oslogin/60-flatcar-google-oslogin.conf' '/etc/ssh/sshd_config.d/10-flatcar-google-oslogin.conf'
 ln -f -s '/usr/share/google-oslogin/oslogin-sudoers' '/etc/sudoers.d/oslogin-sudoers'
 ln -f -s '/usr/share/google-oslogin/group.conf' '/etc/security/group.conf'
